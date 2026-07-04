@@ -149,7 +149,7 @@ button:focus-visible{outline:2px solid rgba(124,92,252,0.5);outline-offset:2px}
 .lf-panel-btn:hover{color:var(--lf-text);background:rgba(255,255,255,0.06)}
 .lf-panel-body{display:flex;gap:0;min-height:400px}
 .lf-panel-col{flex:1;display:flex;flex-direction:column}
-.lf-panel-col+.lf-panel-col{border-left:1px solid rgba(255,255,255,0.05)}
+.lf-panel-col:first-child{border-right:1px solid rgba(255,255,255,0.1)}
 .lf-panel-lang{display:flex;align-items:center;padding:8px 12px;gap:8px;border-bottom:1px solid rgba(255,255,255,0.04)}
 .lf-panel-lang span{font-size:11px!important;color:var(--lf-text-weak);flex-shrink:0}
 .lf-panel-lang select{background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--lf-text);font-size:11px;padding:4px 6px;outline:none;cursor:pointer;font-family:inherit;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath d='M1 2l3 3 3-3' stroke='%239090a8' stroke-width='1.2' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;padding-right:20px}

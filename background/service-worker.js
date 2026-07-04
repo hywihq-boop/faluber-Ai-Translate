@@ -288,9 +288,7 @@ async function handlePanelTranslate(msg, sendResponse) {
   const targetName = LANG_MAP[targetLang] || targetLang;
   const sourceName = sourceLang && sourceLang !== 'auto' ? (LANG_MAP[sourceLang] || sourceLang) : '';
   try {
-    const systemPrompt = sourceName
-      ? `Translate from ${sourceName} to ${targetName}. Only output the translation, no extra text.`
-      : `Translate to ${targetName}. Only output the translation, no extra text.`;
+    const systemPrompt = `你是专业翻译员。将以下文字翻译成${targetName}，只输出译文，不要解释、不要注释、不要原文。`;
     const response = await fetch(`${apiUrl}/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${apiKey}` },

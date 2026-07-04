@@ -105,7 +105,7 @@ async function handleBatchTranslate(msg, sendResponse) {
   try {
     const body = JSON.stringify({
       model, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: lines }],
-      temperature: 0.3, max_tokens: 3000,
+      temperature: 0.3, max_tokens: 3000, reasoning_effort: 'low',
     });
 
     const response = await fetch(`${apiUrl}/chat/completions`, {
@@ -189,7 +189,7 @@ async function handleExplain(msg, sendResponse) {
       const r = await fetch(`${apiUrl}/chat/completions`, {
         method: 'POST',
         headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${apiKey}` },
-        body: JSON.stringify({ model, messages: [{ role:'user', content: p }], max_tokens:1000 }),
+        body: JSON.stringify({ model, messages: [{ role:'user', content: p }], max_tokens:1000, reasoning_effort:'low' }),
       });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const d = await r.json();

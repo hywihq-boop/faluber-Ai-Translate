@@ -641,12 +641,13 @@ button:focus-visible{outline:2px solid rgba(124,92,252,0.5);outline-offset:2px}
     let panelTimer=null;
     const doPanelTranslate=async()=>{
       const inp=document.getElementById('lf-panel-input'); const txt=inp.value.trim(); if(!txt) return;
+      const out=document.getElementById('lf-panel-output');
       const btn=document.getElementById('lf-panel-translate'); btn.textContent='⏳'; btn.disabled=true;
-      const cfg=await readApiSettings(); if(!cfg.apiKey){ updateBubble('⚠️ '+t('noKey')); btn.textContent='🔄 翻译'; btn.disabled=false; return; }
+      const cfg=await readApiSettings(); if(!cfg.apiKey){ out.value='⚠️ '+t('noKey'); btn.textContent='🔄 翻译'; btn.disabled=false; return; }
       chrome.runtime.sendMessage({ type:'PANEL_TRANSLATE', text:txt, sourceLang:srcSel.value, targetLang:tgtSel.value, settings:{ apiKey:cfg.apiKey, apiUrl:cfg.apiUrl, model:cfg.model } }, resp=>{
         btn.textContent='🔄 翻译'; btn.disabled=false;
-        if(resp?.success){ document.getElementById('lf-panel-output').value=resp.translation; if(resp.usage) addPageTokens(resp.usage); }
-        else document.getElementById('lf-panel-output').value='⚠️ '+(resp?.error||'翻译失败');
+        if(resp?.success){ out.value=resp.translation; if(resp.usage) addPageTokens(resp.usage); }
+        else out.value='⚠️ '+(resp?.error||'翻译失败');
       });
     };
     document.getElementById('lf-panel-translate').addEventListener('click',doPanelTranslate);

@@ -648,26 +648,48 @@ button:focus-visible{outline:2px solid rgba(124,92,252,0.5);outline-offset:2px}
     document.getElementById('lf-panel-copy').addEventListener('click',()=>{ const v=document.getElementById('lf-panel-output').value; if(v){ navigator.clipboard.writeText(v).then(()=>showToast('success','✅ 已复制')); } });
     document.getElementById('lf-panel-clear').addEventListener('click',()=>{ document.getElementById('lf-panel-input').value=''; document.getElementById('lf-panel-output').value=''; document.getElementById('lf-panel-count').textContent='0 字符'; });
     let panelTimer=null;
+    function splitText(txt,limit=300){
+      if(txt.length<=limit) return [txt];
+      const chunks=[];
+      // 优先按段落分
+      const paras=txt.split(/\n\s*\n/);
+      for(const p of paras){
+        if(p.length<=limit){ chunks.push(p); continue; }
+        // 按句号分
+        const sents=p.split(/(?<=[。！？.!?])\s*/);
+        let cur='';
+        for(const s of sents){
+          if((cur+s).length>limit&&cur){ chunks.push(cur.trim()); cur=s; }
+          else cur+=s;
+        }
+        if(cur.trim()) chunks.push(cur.trim());
+      }
+      return chunks.length?chunks:[txt];
+    }
     const doPanelTranslate=async()=>{
       const inp=document.getElementById('lf-panel-input'); const txt=inp.value.trim();
       const out=document.getElementById('lf-panel-output');
       document.getElementById('lf-panel-count').textContent=(inp.value.length||0)+' 字符';
       if(!txt){ out.value=''; return; }
-      // 检查缓存
       if(translationCache.has(txt)){ out.value=translationCache.get(txt); return; }
       const btn=document.getElementById('lf-panel-translate'); btn.textContent='⏳'; btn.disabled=true;
       const cfg=await readApiSettings(); if(!cfg.apiKey){ out.value='⚠️ '+t('noKey'); btn.textContent='🔄 翻译'; btn.disabled=false; return; }
-      // 按输入长度动态设定 max_tokens: 约3倍+100，上限800
-      const tokLimit=Math.min(txt.length*3+100,800);
-      return new Promise((resolve,reject)=>{
-        let done=false; panelAbort=()=>{ if(!done){ done=true; reject(new Error('aborted')); } };
-        chrome.runtime.sendMessage({ type:'PANEL_TRANSLATE', text:txt, maxTokens:tokLimit, sourceLang:srcSel.value, targetLang:tgtSel.value, settings:{ apiKey:cfg.apiKey, apiUrl:cfg.apiUrl, model:cfg.model } }, resp=>{
-          if(done) return; done=true; panelAbort=null;
-          btn.textContent='🔄 翻译'; btn.disabled=false;
-          if(resp?.success){ out.value=resp.translation; translationCache.set(txt,resp.translation); markCacheDirty(); if(resp.usage) addPageTokens(resp.usage); resolve(); }
-          else{ out.value='⚠️ '+(resp?.error||'翻译失败'); resolve(); }
-        });
-      }).catch(()=>{});
+      try{
+        const chunks=splitText(txt);
+        let aborted=false; panelAbort=()=>{ aborted=true; };
+        const results=await Promise.all(chunks.map((chunk,i)=>{
+          if(aborted) return '';
+          if(translationCache.has(chunk)) return translationCache.get(chunk);
+          const tokLimit=Math.min(chunk.length*3+100,800);
+          return new Promise((resolve)=>{ chrome.runtime.sendMessage({ type:'PANEL_TRANSLATE', text:chunk, maxTokens:tokLimit, sourceLang:srcSel.value, targetLang:tgtSel.value, settings:{ apiKey:cfg.apiKey, apiUrl:cfg.apiUrl, model:cfg.model } }, resp=>{
+            if(aborted){ resolve(chunk); return; }
+            if(resp?.success){ translationCache.set(chunk,resp.translation); markCacheDirty(); if(resp.usage) addPageTokens(resp.usage); resolve(resp.translation); }
+            else resolve('⚠️ '+(resp?.error||'翻译失败'));
+          });});
+        }));
+        if(!aborted){ out.value=results.join('\n\n'); translationCache.set(txt,out.value); markCacheDirty(); }
+      }catch(e){ out.value='⚠️ 翻译出错'; }
+      btn.textContent='🔄 翻译'; btn.disabled=false; panelAbort=null;
     };
     let panelAbort=null;
     document.getElementById('lf-panel-translate').addEventListener('click',doPanelTranslate);

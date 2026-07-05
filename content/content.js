@@ -5,8 +5,10 @@
 (function () {
   'use strict';
 
-  window.addEventListener('unhandledrejection',e=>{ if(e.reason?.message?.includes('context invalidated')){ e.preventDefault(); console.warn('[LF] 扩展已更新，请刷新页面'); } });
-  window.addEventListener('error',e=>{ if(e.message?.includes('context invalidated')){ e.preventDefault(); console.warn('[LF] 扩展已更新，请刷新页面'); return false; } },true);
+  window.addEventListener('unhandledrejection',e=>{ if(e.reason?.message?.includes('context invalidated')){ e.preventDefault(); } });
+  window.addEventListener('error',e=>{ if(e.message?.includes('context invalidated')){ e.preventDefault(); return false; } },true);
+  // 安全调用 chrome API，避免 context invalidated 报错
+  const safeStorage={ async get(k){ try{return await chrome.storage.sync.get(k)}catch{return{}} }, async set(k){ try{await chrome.storage.sync.set(k)}catch{} }, async localGet(k){ try{return await chrome.storage.local.get(k)}catch{return{}} }, async localSet(k){ try{await chrome.storage.local.set(k)}catch{} }, async localRemove(k){ try{await chrome.storage.local.remove(k)}catch{} } };
 
   let isTranslated = false, isTranslating = false;
   let translationMap = new Map();
@@ -280,7 +282,7 @@ button:focus-visible{outline:2px solid rgba(124,92,252,0.5);outline-offset:2px}
       wrapper.classList.toggle('collapsed', collapsed);
       mini.classList.toggle('visible', collapsed);
       btnCollapse.title = collapsed ? '展开悬浮球' : '收起悬浮球';
-      chrome.storage.local.set({ lf_collapsed: collapsed });
+      safeStorage.localSet({ lf_collapsed: collapsed });
     });
 
     updateMiniText();
@@ -479,7 +481,7 @@ button:focus-visible{outline:2px solid rgba(124,92,252,0.5);outline-offset:2px}
   chrome.runtime.onMessage.addListener((msg,sender,sendResponse)=>{ switch(msg.type) { case 'START_TRANSLATION':sendResponse({ success:true });showTranslation=true;updateUsageBall();startTranslation(msg.settings,{ continuous:true }).catch(e=>console.error(e));break; case 'RESTORE_PAGE':restoreOriginal();showTranslation=false;updateUsageBall();showToast('warning',t('restored'));sendResponse({ success:true });break; case 'GET_STATUS':sendResponse({ isTranslated,isTranslating });break; case 'UI_LANG_CHANGED':if(msg.uiLang&&msg.uiLang!==uiLang){uiLang=msg.uiLang;updateAllUIText();updateUsageBall();updateDetailNumbers();const sel=document.getElementById('lf-ui-lang');if(sel)sel.value=uiLang;}break; case 'TOGGLE_PANEL':togglePanel();break; } });
   async function saveTabMode(on) { const id=await getTabId(); await chrome.storage.local.set({ [`tmode_${id}`]:on }); }
   async function getTabMode() { const id=await getTabId(); const r=await chrome.storage.local.get(`tmode_${id}`); return r[`tmode_${id}`]||false; }
-  async function loadAndTranslate(opts={}) { const apiSettings=await readApiSettings(); if (!apiSettings.apiKey) { showToast('error','⚠️ '+t('noKey')); return; } if (apiSettings.supportsConcurrency===false) { showApiError('此 API 不支持并发，请在 Popup 中更换 API 或开启"支持并发"选项'); return; } const s=await chrome.storage.sync.get({ sourceLang:'auto',targetLang:'zh-CN',hoverOriginal:true,showProgress:true,mode:null }); if (s.mode) { mode=s.mode; } settings={ ...apiSettings, ...s }; abortController=new AbortController(); try { await startTranslation(settings,opts); } catch(e) { console.error(e); updateUsageBall(); } }
+  async function loadAndTranslate(opts={}) { try { const apiSettings=await readApiSettings(); if (!apiSettings.apiKey) { showToast('error','⚠️ '+t('noKey')); return; } if (apiSettings.supportsConcurrency===false) { showApiError('此 API 不支持并发，请在 Popup 中更换 API 或开启"支持并发"选项'); return; } const s=await chrome.storage.sync.get({ sourceLang:'auto',targetLang:'zh-CN',hoverOriginal:true,showProgress:true,mode:null }); if (s.mode) { mode=s.mode; } settings={ ...apiSettings, ...s }; abortController=new AbortController(); try { await startTranslation(settings,opts); } catch(e) { console.error(e); updateUsageBall(); } } catch(e) { if(!e.message?.includes('context invalidated')) console.error(e); } }
   function estimateCost(input,output) { const p={ 'deepseek-chat':[1,2],'deepseek-reasoner':[4,16] }[settings.model]||[1,2]; return (input/1e6)*p[0]+(output/1e6)*p[1]; }
   function addPageTokens(u) { if (!u) return; pageTokens.input+=u.prompt_tokens||0; pageTokens.output+=u.completion_tokens||0; pageTokens.total+=u.total_tokens||0; pageTokens.apiCalls++; updateUsageBall(); }
 
@@ -672,6 +674,6 @@ button:focus-visible{outline:2px solid rgba(124,92,252,0.5);outline-offset:2px}
       document.getElementById('lf-mini').classList.add('visible');
       document.getElementById('btn-collapse').classList.add('collapsed');
     }
-    updateMiniText(); const stored=await chrome.storage.sync.get('uiLang'); if(stored.uiLang&&stored.uiLang!==uiLang){ uiLang=stored.uiLang; updateAllUIText(); const sel=document.getElementById('lf-ui-lang'); if(sel) sel.value=uiLang; } await getTabId(); await loadPersistentCache(); if(await getTabMode()){ switchIntent=true; showTranslation=true; updateUsageBall(); setTimeout(()=>loadAndTranslate({ continuous:true }),800); } } catch(e) { if(!e.message?.includes('context invalidated')) console.error('[LF] 初始化失败:',e.message); } })();
+    updateMiniText(); const stored=await safeStorage.get('uiLang'); if(stored.uiLang&&stored.uiLang!==uiLang){ uiLang=stored.uiLang; updateAllUIText(); const sel=document.getElementById('lf-ui-lang'); if(sel) sel.value=uiLang; } try{ await getTabId(); await loadPersistentCache(); if(await getTabMode()){ switchIntent=true; showTranslation=true; updateUsageBall(); setTimeout(()=>loadAndTranslate({ continuous:true }),800); } }catch{} } catch(e) { if(!e.message?.includes('context invalidated')) console.error('[LF] 初始化失败:',e.message); } })();
   console.log('🌐 Faluber Translate 已加载');
 })();

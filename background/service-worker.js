@@ -330,3 +330,34 @@ async function handleFetchModels(msg, sendResponse) {
     sendResponse({ success: false, error: err.message });
   }
 }
+
+// ===== 更新检测 =====
+function compareVersions(a, b) {
+  const pa = a.split('.').map(Number), pb = b.split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    if ((pa[i]||0) > (pb[i]||0)) return 1;
+    if ((pa[i]||0) < (pb[i]||0)) return -1;
+  }
+  return 0;
+}
+
+async function checkForUpdate() {
+  try {
+    const currentVer = chrome.runtime.getManifest().version;
+    const resp = await fetch('https://api.github.com/repos/hywihq-boop/faluber-translate/releases/latest');
+    if (!resp.ok) return;
+    const data = await resp.json();
+    const latest = data.tag_name.replace(/^v/, '');
+    await chrome.storage.local.set({ lf_update_cache: { time: Date.now(), status: compareVersions(latest, currentVer) > 0 ? 'hasupdate' : 'uptodate', latest } });
+  } catch(e) { /* 静默失败 */ }
+}
+
+// 每天检查 + 启动时检查
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.alarms.create('lf-update-check', { periodInMinutes: 1440 });
+  checkForUpdate();
+});
+chrome.alarms.onAlarm.addListener(alarm => {
+  if (alarm.name === 'lf-update-check') checkForUpdate();
+});
+chrome.runtime.onStartup.addListener(() => checkForUpdate());

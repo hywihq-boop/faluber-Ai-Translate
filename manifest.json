@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Faluber Translate",
-  "version": "2.0.10",
+  "version": "2.0.11",
   "description": "基于 AI 的网页翻译插件，支持全球语言互译，一键翻译整页",
 
   "icons": {
@@ -26,16 +26,7 @@
   ],
 
   "host_permissions": [
-    "https://api.deepseek.com/*",
-    "https://api.openai.com/*",
-    "https://api.groq.com/*",
-    "https://api.together.xyz/*",
-    "https://openrouter.ai/*",
-    "https://api.siliconflow.cn/*",
-    "https://api.moonshot.cn/*",
-    "https://open.bigmodel.cn/*",
-    "https://dashscope.aliyuncs.com/*",
-    "http://localhost/*"
+    "https://api.deepseek.com/*"
   ],
 
   "content_scripts": [

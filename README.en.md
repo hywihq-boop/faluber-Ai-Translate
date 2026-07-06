@@ -103,15 +103,14 @@ In-memory + persistent dual-layer cache. Repeated text returns instantly with **
 
 1. Go to [Releases](https://github.com/hywihq-boop/faluber-translate/releases)
 2. Download the latest `faluber-translate-vX.X.X.zip`
-3. Unzip to any folder
-4. Open `chrome://extensions`, enable **Developer mode** (top-right)
-5. Click **Load unpacked**, select the unzipped folder
-6. Done!
+3. Open `chrome://extensions`, enable **Developer mode** (top-right)
+4. **Drag the zip file directly** into the browser window
+5. Done!
 
 ### Method 2: Download Source ZIP
 
 1. Click the green **Code** button → Download ZIP on the repo homepage
-2. Unzip and follow the same steps above to load
+2. Drag the downloaded zip into `chrome://extensions`
 
 ### Configure & Use
 

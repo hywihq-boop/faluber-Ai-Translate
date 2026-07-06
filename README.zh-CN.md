@@ -103,15 +103,14 @@
 
 1. 打开 [Releases](https://github.com/hywihq-boop/faluber-translate/releases) 页面
 2. 下载最新版 `faluber-translate-vX.X.X.zip`
-3. 解压到任意文件夹
-4. 打开 `chrome://extensions`，开启右上角**开发者模式**
-5. 点击 **加载已解压的扩展程序**，选择解压后的文件夹
-6. 完成！
+3. 打开 `chrome://extensions`，开启右上角**开发者模式**
+4. 将下载的 zip 文件**直接拖入**浏览器窗口
+5. 完成！
 
 ### 方法二：下载源码 zip
 
 1. 在仓库主页点击绿色 **Code** 按钮 → Download ZIP
-2. 解压后同上步骤加载
+2. 同样拖入 `chrome://extensions` 即可
 
 ### 配置与使用
 

@@ -1,3 +1,5 @@
+[中文](README.md) | [English](README.en.md) | [繁體中文](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Русский](README.ru.md) | [العربية](README.ar.md)
+
 <div align="center">
   <img src="icons/logo.png" width="96" height="96" style="border-radius:18px">
 
